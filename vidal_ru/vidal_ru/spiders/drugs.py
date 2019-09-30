@@ -60,9 +60,11 @@ class Drugs(Spider):
         drug.active_substances_rus = \
             create_list(response.xpath('//*[@id="composition"]/div/table/tr/td/text()[not(../../*[@colspan="2"])]')
                         .getall())
+        # TODO: Выловить ошибку с NoneType первого элемента.
         drug.owners = parse_string(response.xpath('//*[@class="owners"]/a/text()').get()) + ' ' +\
                  parse_string(response.xpath('//*[@class="owners"]/span/text()').get())
 
+        # TODO: Не записывать пустого дистрибутора в БД
         distributor = []
         for item in response.xpath('//*[@class="distributor"]//text()').getall():
             data = parse_string(item)
@@ -70,4 +72,4 @@ class Drugs(Spider):
                 distributor.append(data)
         drug.distributor = ' '.join(distributor[1:])
 
-        # drug.save()
+        drug.save()
