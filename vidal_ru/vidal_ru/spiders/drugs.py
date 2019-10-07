@@ -6,7 +6,13 @@ from models import DrugRecord
 connect('vidal_ru', host='10.0.0.1')
 
 
-def parse_string(string):
+def parse_string(string: str) -> str:
+    """
+    Delete from string not needed spaces and symbols
+    :param string: str
+    :return: str
+    """
+
     if string is not None:
         string = string.replace('\n', '')
         string = string.replace('\u2003', '')
@@ -16,7 +22,22 @@ def parse_string(string):
         return string
 
 
-def create_list(iterable):
+def create_drug_name(data: list) -> str:
+    """
+    Create drug name from list
+    :param data:
+    :return:
+    """
+    new_data = []
+    for item in data:
+        item = parse_string(item)
+        if item != '':
+            new_data.append(item)
+
+    return ' '.join(new_data)
+
+
+def create_list_of_components(iterable):
     if iterable is not None:
         key = []
         value = []
@@ -55,14 +76,14 @@ class Drugs(Spider):
     @staticmethod
     def parse_drug_page(response):
         drug = DrugRecord()
-        drug.drug_name = parse_string(response.xpath('//td[@class="products-table-name"]/text()').get())
+        drug.drug_name = create_drug_name(response.xpath('//*[@class="products-table-name"]/text()').getall())
         drug.atc_code = parse_string(response.xpath('//*[@id="atc_codes"]/span[2]/a/text()').get())
         drug.active_substances_rus = \
-            create_list(response.xpath('//*[@id="composition"]/div/table/tr/td/text()[not(../../*[@colspan="2"])]')
-                        .getall())
+            create_list_of_components(
+                response.xpath('//*[@id="composition"]/div/table/tr/td/text()[not(../../*[@colspan="2"])]').getall())
         # TODO: Выловить ошибку с NoneType первого элемента.
-        drug.owners = parse_string(response.xpath('//*[@class="owners"]/a/text()').get()) + ' ' +\
-                 parse_string(response.xpath('//*[@class="owners"]/span/text()').get())
+        drug.owners = parse_string(response.xpath('//*[@class="owners"]/a/text()').get()) + ' ' + \
+                      parse_string(response.xpath('//*[@class="owners"]/span/text()').get())
 
         # TODO: Не записывать пустого дистрибутора в БД
         distributor = []
